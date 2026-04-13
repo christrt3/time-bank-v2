@@ -1,0 +1,90 @@
+@page
+@model Time_Bank_V1.Pages.Messages.ComposeModel
+@{
+    ViewData["Title"] = "New Message";
+}
+
+<div class="mb-4">
+    <h2 class="mb-0"><i class="fa fa-pen-to-square me-2 text-success"></i>New Message</h2>
+    <p class="text-muted small">Messages are sent anonymously by default to protect privacy</p>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow">
+            <div class="card-header bg-success text-white">
+                <h6 class="mb-0">Compose Message</h6>
+            </div>
+            <div class="card-body p-4">
+                <form method="post">
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                    <!-- Send to category toggle -->
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input asp-for="Input.SendToCategory" class="form-check-input" id="sendToCategoryToggle"
+                                   onchange="toggleRecipient(this.checked)" />
+                            <label asp-for="Input.SendToCategory" class="form-check-label fw-semibold">
+                                <i class="fa fa-users me-1 text-success"></i>Send to entire service category
+                            </label>
+                        </div>
+                        <small class="text-muted">Email all active members in a category at once</small>
+                    </div>
+
+                    <!-- User recipient -->
+                    <div id="userRecipient" class="mb-3">
+                        <label asp-for="Input.ToUserId" class="form-label fw-semibold">To (User ID) <span class="text-muted">(leave blank if sending to category)</span></label>
+                        <input asp-for="Input.ToUserId" class="form-control" placeholder="Paste member ID..." />
+                        <div class="form-text">To reply to someone, use the ID provided in their message</div>
+                    </div>
+
+                    <!-- Category recipient -->
+                    <div id="categoryRecipient" class="mb-3 d-none">
+                        <label asp-for="Input.ToCategoryId" class="form-label fw-semibold">Service Category <span class="text-danger">*</span></label>
+                        <select asp-for="Input.ToCategoryId" asp-items="Model.CategoryOptions" class="form-select">
+                            <option value="">Select category...</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Input.Subject" class="form-label fw-semibold">Subject <span class="text-danger">*</span></label>
+                        <input asp-for="Input.Subject" class="form-control" placeholder="Brief subject line..." />
+                        <span asp-validation-for="Input.Subject" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Input.Body" class="form-label fw-semibold">Message <span class="text-danger">*</span></label>
+                        <textarea asp-for="Input.Body" class="form-control" rows="6" placeholder="Write your message here..."></textarea>
+                        <span asp-validation-for="Input.Body" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-4 form-check">
+                        <input asp-for="Input.IsAnonymous" class="form-check-input" />
+                        <label asp-for="Input.IsAnonymous" class="form-check-label">
+                            Send anonymously <span class="text-muted small">(your name won't be shown)</span>
+                        </label>
+                    </div>
+
+                    <div class="d-flex gap-3 justify-content-end">
+                        <a asp-page="/Messages/Index" class="btn btn-outline-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fa fa-paper-plane me-2"></i>Send Message
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        function toggleRecipient(sendToCategory) {
+            document.getElementById('userRecipient').classList.toggle('d-none', sendToCategory);
+            document.getElementById('categoryRecipient').classList.toggle('d-none', !sendToCategory);
+        }
+        // Initialize on load
+        toggleRecipient(document.getElementById('sendToCategoryToggle').checked);
+    </script>
+}

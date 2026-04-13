@@ -1,0 +1,124 @@
+@page
+@model Time_Bank_V1.Pages.OffersModel
+@using Time_Bank_V1.Data.Entities
+@{
+    ViewData["Title"] = "Browse Services";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="mb-0"><i class="fa fa-handshake me-2 text-success"></i>Browse Services</h2>
+        <p class="text-muted small mb-0">Offers and requests from community members</p>
+    </div>
+    <a asp-page="/Offers/Create" class="btn btn-success">
+        <i class="fa fa-plus me-1"></i>Post a Service
+    </a>
+</div>
+
+<!-- Filters -->
+<form method="get" class="row g-2 mb-4">
+    <div class="col-md-4">
+        <input type="text" name="Keyword" value="@Model.Keyword" class="form-control" placeholder="Search by keyword..." />
+    </div>
+    <div class="col-md-3">
+        <select name="CategoryId" class="form-select">
+            <option value="">All categories</option>
+            @foreach (var cat in Model.Categories)
+            {
+                <option value="@cat.Id" @(Model.CategoryId == cat.Id ? "selected" : "")>@cat.Name</option>
+            }
+        </select>
+    </div>
+    <div class="col-md-3">
+        <select name="OfferTypeFilter" class="form-select">
+            <option value="">Offers &amp; Requests</option>
+            <option value="Offer" @(Model.OfferTypeFilter == "Offer" ? "selected" : "")>Offers only</option>
+            <option value="Request" @(Model.OfferTypeFilter == "Request" ? "selected" : "")>Requests only</option>
+        </select>
+    </div>
+    <div class="col-md-2">
+        <button type="submit" class="btn btn-outline-success w-100"><i class="fa fa-filter me-1"></i>Filter</button>
+    </div>
+</form>
+
+@if (!Model.OffersList.Any())
+{
+    <div class="text-center py-5 text-muted">
+        <i class="fa fa-magnifying-glass fa-3x mb-3 d-block"></i>
+        <h5>No services found</h5>
+        <p>Try adjusting your filters or <a asp-page="/Offers/Create" class="text-success">post a new service</a>.</p>
+    </div>
+}
+else
+{
+    <div class="row g-3">
+        @foreach (var offer in Model.OffersList)
+        {
+            var typeColor = offer.OfferType == OfferType.Offer ? "success" : "primary";
+            var typeLabel = offer.OfferType == OfferType.Offer ? "Offering" : "Requesting";
+            var initials = offer.User?.Initials ?? "?";
+            <div class="col-md-12">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="d-flex gap-3">
+                                @if (!string.IsNullOrEmpty(offer.User?.ProfilePicturePath))
+                                {
+                                    <img src="@offer.User.ProfilePicturePath" class="rounded-circle"
+                                         style="width:40px;height:40px;object-fit:cover;" alt="@initials" />
+                                }
+                                else
+                                {
+                                    <div class="acc-avatar-sm">@initials</div>
+                                }
+                                <div>
+                                    <h5 class="card-title mb-1">@offer.Title</h5>
+                                    <div class="text-muted small">
+                                        <span class="badge bg-@typeColor me-1">@typeLabel</span>
+                                        @offer.Category?.Name
+                                        @if (offer.EstimatedHours.HasValue)
+                                        {
+                                            <span class="ms-2"><i class="fa fa-clock me-1"></i>~@offer.EstimatedHours.Value.ToString("0.##")h</span>
+                                        }
+                                        @if (!string.IsNullOrEmpty(offer.User?.City))
+                                        {
+                                            <span class="ms-2"><i class="fa fa-location-dot me-1"></i>@offer.User.City</span>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                            <span class="badge bg-light text-dark border">@offer.Status</span>
+                        </div>
+
+                        <p class="card-text mt-3 mb-2">@offer.Description</p>
+
+                        @if (!string.IsNullOrEmpty(offer.Keywords))
+                        {
+                            <div class="mb-2">
+                                @foreach (var kw in offer.Keywords.Split(',', StringSplitOptions.RemoveEmptyEntries))
+                                {
+                                    <span class="badge bg-light text-dark border me-1">@kw.Trim()</span>
+                                }
+                            </div>
+                        }
+
+                        <div class="d-flex justify-content-between align-items-center mt-2">
+                            <small class="text-muted">Posted @offer.CreatedAt.ToString("MMM d, yyyy")</small>
+                            <div class="d-flex gap-2">
+                                <a asp-page="/Offers/Details" asp-route-id="@offer.Id" class="btn btn-sm btn-outline-secondary">
+                                    <i class="fa fa-eye me-1"></i>Details
+                                </a>
+                                <form method="post" asp-page-handler="RequestMatch" style="display:inline;">
+                                    <input type="hidden" name="offerId" value="@offer.Id" />
+                                    <button type="submit" class="btn btn-sm btn-@typeColor">
+                                        <i class="fa fa-handshake me-1"></i>@(offer.OfferType == OfferType.Offer ? "Request Match" : "Offer Help")
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}

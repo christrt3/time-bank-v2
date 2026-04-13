@@ -1,0 +1,284 @@
+@page
+@model Time_Bank_V1.Pages.ProfileModel
+@using Time_Bank_V1.Data.Entities
+@{
+    ViewData["Title"] = "My Profile";
+    var user = Model.CurrentUser;
+    var days = new[] { "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun" };
+    DayOfWeek[] daysEnum = { DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday, DayOfWeek.Saturday, DayOfWeek.Sunday };
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="mb-0"><i class="fa fa-user-pen me-2 text-success"></i>My Profile &amp; Settings</h2>
+        <p class="text-muted small mb-0">Manage your personal information, skills, and preferences</p>
+    </div>
+</div>
+
+<form method="post" enctype="multipart/form-data">
+    <div class="row g-4">
+        <!-- LEFT COLUMN -->
+        <div class="col-md-6">
+
+            <!-- Personal Info -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-success text-white">
+                    <h6 class="mb-0"><i class="fa fa-id-card me-2"></i>Personal Information</h6>
+                </div>
+                <div class="card-body">
+                    <!-- Avatar -->
+                    <div class="d-flex align-items-center gap-3 mb-4">
+                        @if (!string.IsNullOrEmpty(user?.ProfilePicturePath))
+                        {
+                            <img src="@user.ProfilePicturePath" alt="Profile photo"
+                                 class="rounded-circle" style="width:64px;height:64px;object-fit:cover;" />
+                        }
+                        else
+                        {
+                            <div class="acc-avatar-lg">@(user?.Initials ?? "?")</div>
+                        }
+                        <div>
+                            <label for="ProfilePicture" class="btn btn-sm btn-outline-secondary">
+                                <i class="fa fa-camera me-1"></i>Change Photo
+                            </label>
+                            <input type="file" id="ProfilePicture" name="ProfilePicture" class="d-none"
+                                   accept="image/jpeg,image/png,image/gif,image/webp" />
+                            <div class="small text-muted mt-1">JPG, PNG, GIF or WEBP</div>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label asp-for="Input.FirstName" class="form-label fw-semibold small">First Name <span class="text-danger">*</span></label>
+                            <input asp-for="Input.FirstName" class="form-control" />
+                            <span asp-validation-for="Input.FirstName" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Input.LastName" class="form-label fw-semibold small">Last Name <span class="text-danger">*</span></label>
+                            <input asp-for="Input.LastName" class="form-control" />
+                            <span asp-validation-for="Input.LastName" class="text-danger small"></span>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="Input.Email" class="form-label fw-semibold small">Email <span class="text-danger">*</span></label>
+                        <input asp-for="Input.Email" class="form-control" />
+                        <span asp-validation-for="Input.Email" class="text-danger small"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="Input.Phone" class="form-label fw-semibold small">Phone</label>
+                        <input asp-for="Input.Phone" class="form-control" placeholder="(352) 555-0100" />
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label asp-for="Input.City" class="form-label fw-semibold small">City</label>
+                            <input asp-for="Input.City" class="form-control" placeholder="Gainesville" />
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Input.ZipCode" class="form-label fw-semibold small">ZIP Code</label>
+                            <input asp-for="Input.ZipCode" class="form-control" placeholder="32601" />
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="Input.Bio" class="form-label fw-semibold small">Bio / About Me</label>
+                        <textarea asp-for="Input.Bio" class="form-control" rows="3" placeholder="Tell the community about yourself..."></textarea>
+                    </div>
+                    @if (user?.AccountType == "Organization")
+                    {
+                        <div class="mb-3">
+                            <label asp-for="Input.OrganizationName" class="form-label fw-semibold small">Organization Name</label>
+                            <input asp-for="Input.OrganizationName" class="form-control" />
+                        </div>
+                    }
+                    <div class="mb-3">
+                        <label asp-for="Input.Licensure" class="form-label fw-semibold small">Licensure / Credentials <span class="text-muted">(optional, not verified)</span></label>
+                        <input asp-for="Input.Licensure" class="form-control" placeholder="e.g. CPA, RN, Licensed Contractor" />
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="Input.PreferredLanguage" class="form-label fw-semibold small">Preferred Language</label>
+                        <select asp-for="Input.PreferredLanguage" class="form-select">
+                            <option value="English">English</option>
+                            <option value="Spanish">Español</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notifications -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0"><i class="fa fa-bell me-2 text-success"></i>Notification Preferences</h6>
+                </div>
+                <div class="card-body">
+                    <div class="form-check mb-2">
+                        <input asp-for="Input.NotifyInApp" class="form-check-input" />
+                        <label asp-for="Input.NotifyInApp" class="form-check-label">In-app notifications</label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input asp-for="Input.NotifyEmail" class="form-check-input" />
+                        <label asp-for="Input.NotifyEmail" class="form-check-label">Email notifications</label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input asp-for="Input.NotifyMatchAlerts" class="form-check-input" />
+                        <label asp-for="Input.NotifyMatchAlerts" class="form-check-label">Match alerts</label>
+                    </div>
+                    <div class="form-check">
+                        <input asp-for="Input.NotifySms" class="form-check-input" />
+                        <label asp-for="Input.NotifySms" class="form-check-label">SMS / Text alerts</label>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- RIGHT COLUMN -->
+        <div class="col-md-6">
+
+            <!-- Skills -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-success text-white">
+                    <h6 class="mb-0"><i class="fa fa-star me-2"></i>My Skills</h6>
+                </div>
+                <div class="card-body">
+                    <p class="small text-muted mb-3">Select all skills you can offer to the community:</p>
+                    @foreach (var cat in Model.Categories)
+                    {
+                        <h6 class="text-uppercase text-muted fw-bold small border-bottom pb-1 mb-2">@cat.Name</h6>
+                        <div class="row g-2 mb-3">
+                            @foreach (var skill in Model.AllSkills.Where(s => s.CategoryId == cat.Id))
+                            {
+                                <div class="col-6">
+                                    <div class="form-check">
+                                        <input type="checkbox" class="form-check-input" name="Input.SkillIds" value="@skill.Id"
+                                               id="skill_@skill.Id"
+                                               @(Model.SelectedSkillIds.Contains(skill.Id) ? "checked" : "") />
+                                        <label class="form-check-label small" for="skill_@skill.Id">@skill.Name</label>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Availability -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0"><i class="fa fa-calendar me-2 text-success"></i>Availability</h6>
+                </div>
+                <div class="card-body">
+                    <p class="small text-muted mb-3">Check the times you're generally available to provide services:</p>
+                    <div class="table-responsive">
+                        <table class="table table-borderless text-center align-middle mb-0" style="font-size: 0.85rem;">
+                            <thead>
+                                <tr class="text-muted fw-semibold">
+                                    <th class="text-start"></th>
+                                    @foreach (var d in days) { <th>@d</th> }
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="text-start fw-semibold text-muted small">Morning</td>
+                                    @for (int i = 0; i < 7; i++) {
+                                        <td><input asp-for="Input.MorningAvailability[i]" type="checkbox" class="form-check-input" /></td>
+                                    }
+                                </tr>
+                                <tr>
+                                    <td class="text-start fw-semibold text-muted small">Afternoon</td>
+                                    @for (int i = 0; i < 7; i++) {
+                                        <td><input asp-for="Input.AfternoonAvailability[i]" type="checkbox" class="form-check-input" /></td>
+                                    }
+                                </tr>
+                                <tr>
+                                    <td class="text-start fw-semibold text-muted small">Evening</td>
+                                    @for (int i = 0; i < 7; i++) {
+                                        <td><input asp-for="Input.EveningAvailability[i]" type="checkbox" class="form-check-input" /></td>
+                                    }
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Public visibility -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0"><i class="fa fa-eye me-2 text-success"></i>Public Profile Visibility</h6>
+                </div>
+                <div class="card-body">
+                    <p class="small text-muted mb-3">Choose which information appears on your public profile:</p>
+                    <div class="form-check mb-2">
+                        <input asp-for="Input.ShowCity" class="form-check-input" />
+                        <label asp-for="Input.ShowCity" class="form-check-label small">Show my city</label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input asp-for="Input.ShowPhone" class="form-check-input" />
+                        <label asp-for="Input.ShowPhone" class="form-check-label small">Show my phone number</label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input asp-for="Input.ShowAvailability" class="form-check-input" />
+                        <label asp-for="Input.ShowAvailability" class="form-check-label small">Show my availability</label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input asp-for="Input.ShowSkills" class="form-check-input" />
+                        <label asp-for="Input.ShowSkills" class="form-check-label small">Show my skills</label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input asp-for="Input.ShowBio" class="form-check-input" />
+                        <label asp-for="Input.ShowBio" class="form-check-label small">Show my bio</label>
+                    </div>
+                    <div class="form-check">
+                        <input asp-for="Input.ShowLicensure" class="form-check-input" />
+                        <label asp-for="Input.ShowLicensure" class="form-check-label small">Show my licensure / credentials</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Feedback received -->
+            @if (Model.ReceivedFeedback.Any())
+            {
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-light">
+                        <h6 class="mb-0"><i class="fa fa-thumbs-up me-2 text-success"></i>Community Feedback (@Model.FeedbackCount)</h6>
+                    </div>
+                    <ul class="list-group list-group-flush">
+                        @foreach (var fb in Model.ReceivedFeedback.Take(5))
+                        {
+                            <li class="list-group-item py-2">
+                                <div class="d-flex align-items-center gap-2 mb-1">
+                                    <i class="fa fa-circle-check text-success"></i>
+                                    <strong class="small">@fb.FromUser.FirstName @fb.FromUser.LastName[0].</strong>
+                                    <small class="text-muted ms-auto">@fb.CreatedAt.ToString("MMM d, yyyy")</small>
+                                </div>
+                                @if (!string.IsNullOrEmpty(fb.Comment))
+                                {
+                                    <p class="small text-muted mb-0 ms-4">@fb.Comment</p>
+                                }
+                            </li>
+                        }
+                    </ul>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-end gap-3 mt-3 mb-5">
+        <a asp-page="/Dashboard" class="btn btn-outline-secondary">Cancel</a>
+        <button type="submit" class="btn btn-success px-4">
+            <i class="fa fa-floppy-disk me-2"></i>Save All Changes
+        </button>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        // Show filename when photo selected
+        document.getElementById('ProfilePicture').addEventListener('change', function (e) {
+            if (this.files.length > 0) {
+                const name = this.files[0].name;
+                this.previousElementSibling && (this.previousElementSibling.textContent = '📷 ' + name);
+            }
+        });
+    </script>
+}

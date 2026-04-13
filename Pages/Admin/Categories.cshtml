@@ -1,0 +1,97 @@
+@page
+@model Time_Bank_V1.Pages.Admin.CategoriesModel
+@using Time_Bank_V1.Data.Entities
+@{
+    ViewData["Title"] = "Manage Categories";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0"><i class="fa fa-folder-tree me-2 text-warning"></i>Service Categories</h2>
+    <a asp-page="/Admin/Index" class="btn btn-outline-secondary btn-sm"><i class="fa fa-arrow-left me-1"></i>Admin Home</a>
+</div>
+
+<div class="row g-4">
+    <!-- Add category form -->
+    <div class="col-md-4">
+        <div class="card shadow-sm">
+            <div class="card-header bg-success text-white">
+                <h6 class="mb-0"><i class="fa fa-plus me-2"></i>Add Category</h6>
+            </div>
+            <div class="card-body">
+                <form method="post" asp-page-handler="Add">
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger small"></div>
+                    <div class="mb-3">
+                        <label asp-for="Input.Name" class="form-label fw-semibold small">Name <span class="text-danger">*</span></label>
+                        <input asp-for="Input.Name" class="form-control" placeholder="Category name" />
+                        <span asp-validation-for="Input.Name" class="text-danger small"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="Input.Description" class="form-label fw-semibold small">Description</label>
+                        <textarea asp-for="Input.Description" class="form-control" rows="2"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="Input.ParentId" class="form-label fw-semibold small">Parent Category (optional)</label>
+                        <select asp-for="Input.ParentId" class="form-select">
+                            <option value="">Top-level category</option>
+                            @foreach (var cat in Model.Categories)
+                            {
+                                <option value="@cat.Id">@cat.Name</option>
+                            }
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-success w-100">
+                        <i class="fa fa-plus me-1"></i>Add Category
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Category list -->
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-light">
+                <h6 class="mb-0">All Categories</h6>
+            </div>
+            <div class="list-group list-group-flush">
+                @foreach (var cat in Model.Categories)
+                {
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="fw-semibold">@cat.Name</span>
+                                @if (!string.IsNullOrEmpty(cat.Description))
+                                {
+                                    <small class="text-muted d-block">@cat.Description</small>
+                                }
+                                @if (cat.SubCategories.Any())
+                                {
+                                    <div class="mt-1">
+                                        @foreach (var sub in cat.SubCategories)
+                                        {
+                                            <span class="badge bg-light text-dark border me-1 small">@sub.Name</span>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                            <div class="d-flex gap-2 align-items-center">
+                                <span class="badge @(cat.IsActive ? "bg-success" : "bg-secondary")">@(cat.IsActive ? "Active" : "Inactive")</span>
+                                <form method="post" asp-page-handler="Toggle">
+                                    <input type="hidden" name="categoryId" value="@cat.Id" />
+                                    <input type="hidden" name="isActive" value="@(!cat.IsActive)" />
+                                    <button type="submit" class="btn btn-sm @(cat.IsActive ? "btn-outline-danger" : "btn-outline-success")">
+                                        @(cat.IsActive ? "Deactivate" : "Activate")
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

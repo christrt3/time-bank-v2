@@ -1,0 +1,223 @@
+@page
+@model Time_Bank_V1.Pages.DashboardModel
+@using Time_Bank_V1.Data.Entities
+@{
+    ViewData["Title"] = "Dashboard";
+    var user = Model.CurrentUser;
+    var balance = Model.CurrentBalance;
+    var balanceColor = balance >= 0 ? "success" : (balance <= -2 ? "danger" : "warning");
+}
+
+<!-- User header -->
+<div class="d-flex align-items-center mb-4 p-3 bg-light border rounded shadow-sm">
+    <div class="acc-avatar-lg me-3">@(user?.Initials ?? "?")</div>
+    <div class="flex-grow-1">
+        <h4 class="mb-0">Welcome back, @(user?.FirstName ?? "Member")!</h4>
+        <small class="text-muted">
+            Member since @(user?.MemberSince.ToString("MMM yyyy")) &middot;
+            @(user?.City ?? "Alachua County")
+            @if (user?.AccountType == "Organization") {
+                <span class="badge bg-primary ms-1">Org</span>
+            }
+        </small>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-page="/Profile" class="btn btn-sm btn-outline-success">
+            <i class="fa fa-user-pen me-1"></i>Profile
+        </a>
+        <a asp-page="/Offers/Create" class="btn btn-sm btn-success">
+            <i class="fa fa-plus me-1"></i>Post Service
+        </a>
+    </div>
+</div>
+
+@if (user?.IsBalanceLocked == true)
+{
+    <div class="alert alert-danger shadow-sm mb-4" role="alert">
+        <strong><i class="fa fa-lock me-2"></i>Account Locked</strong> — Your balance has reached the overdraft limit of -3 hours.
+        You cannot spend or donate hours until your balance is restored. Earn hours by providing services to the community.
+    </div>
+}
+
+<!-- Stats -->
+<div class="row mb-4 text-center g-3">
+    <div class="col-6 col-md-3">
+        <div class="card shadow-sm h-100 border-@balanceColor">
+            <div class="card-body py-3">
+                <h2 class="text-@balanceColor mb-0 fw-bold">@balance.ToString("+0.##;-0.##;0")</h2>
+                <small class="text-muted">Hour Balance</small>
+                @if (user?.IsBalanceLocked == true) {
+                    <div><span class="badge bg-danger mt-1"><i class="fa fa-lock me-1"></i>Locked</span></div>
+                }
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card shadow-sm h-100">
+            <div class="card-body py-3">
+                <h2 class="mb-0 fw-bold">@Model.ActiveMatchesCount</h2>
+                <small class="text-muted">Active Matches</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card shadow-sm h-100 @(Model.PendingConfirmationsCount > 0 ? "border-warning" : "")">
+            <div class="card-body py-3">
+                <h2 class="mb-0 fw-bold @(Model.PendingConfirmationsCount > 0 ? "text-warning" : "")">
+                    @Model.PendingConfirmationsCount
+                </h2>
+                <small class="text-muted">Pending Confirmations</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card shadow-sm h-100">
+            <div class="card-body py-3">
+                <h2 class="mb-0 fw-bold">@Model.OpenOffersCount</h2>
+                <small class="text-muted">My Open Offers</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (Model.PendingConfirmationsCount > 0)
+{
+    <div class="alert alert-warning shadow-sm mb-4" role="alert">
+        <strong><i class="fa fa-triangle-exclamation me-2"></i>Action needed:</strong>
+        @Model.PendingConfirmationsCount service(s) are awaiting your confirmation.
+        <a asp-page="/Confirmations/Index" class="alert-link ms-2">Review now &rarr;</a>
+    </div>
+}
+
+@if (Model.UnreadNotifications.Any())
+{
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-light fw-semibold"><i class="fa fa-bell me-2 text-warning"></i>Notifications</div>
+        <ul class="list-group list-group-flush">
+            @foreach (var n in Model.UnreadNotifications)
+            {
+                <li class="list-group-item d-flex justify-content-between align-items-start py-2">
+                    <span class="small">@n.Message</span>
+                    <small class="text-muted ms-3 text-nowrap">@n.CreatedAt.ToString("MMM d")</small>
+                </li>
+            }
+        </ul>
+    </div>
+}
+
+<div class="row g-4">
+    <!-- Recent Activity -->
+    <div class="col-md-6">
+        <h5 class="mb-3"><i class="fa fa-clock-rotate-left me-2 text-success"></i>Recent Activity</h5>
+        <div class="card shadow-sm">
+            @if (Model.RecentTransactions.Any())
+            {
+                <ul class="list-group list-group-flush">
+                    @foreach (var tx in Model.RecentTransactions)
+                    {
+                        var isProvider = tx.ProviderId == User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                        var sign = isProvider ? "+" : "-";
+                        var txColor = tx.Status == TransactionStatus.Confirmed ? "success" : "warning";
+                        <li class="list-group-item d-flex justify-content-between align-items-center py-2">
+                            <div>
+                                <div class="fw-semibold small">@tx.Description</div>
+                                <small class="text-muted">@tx.ServiceDate.ToString("MMM d, yyyy")</small>
+                            </div>
+                            <div class="text-end">
+                                <div class="fw-bold text-@(isProvider ? "success" : "secondary")">@sign@tx.Hours.ToString("0.##")h</div>
+                                <span class="badge bg-@txColor">@tx.Status</span>
+                            </div>
+                        </li>
+                    }
+                </ul>
+            }
+            else
+            {
+                <div class="card-body text-muted text-center py-4">
+                    <i class="fa fa-inbox fa-2x mb-2 d-block"></i>No transactions yet. Start exchanging services!
+                </div>
+            }
+            <div class="card-footer bg-white">
+                <a asp-page="/Transaction" class="text-success text-decoration-none small fw-bold">View all transactions &rarr;</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Matching Requests -->
+    <div class="col-md-6">
+        <h5 class="mb-3"><i class="fa fa-handshake me-2 text-success"></i>Requests Matching Your Skills</h5>
+        @if (Model.MatchingRequests.Any())
+        {
+            @foreach (var req in Model.MatchingRequests.Take(3))
+            {
+                <div class="card shadow-sm mb-3">
+                    <div class="card-body py-2">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div>
+                                <h6 class="card-title mb-0">@req.Title</h6>
+                                <small class="text-muted">@(req.EstimatedHours.HasValue ? $"{req.EstimatedHours}h" : "?h") &middot; @req.Category?.Name</small>
+                            </div>
+                            <span class="badge bg-success">New Request</span>
+                        </div>
+                        <p class="small text-muted mb-2">@req.Description.Substring(0, Math.Min(80, req.Description.Length))@(req.Description.Length > 80 ? "…" : "")</p>
+                        <div class="d-flex gap-2">
+                            <a asp-page="/Offers/Details" asp-route-id="@req.Id" class="btn btn-sm btn-success">Offer Help</a>
+                            <a asp-page="/Offers/Details" asp-route-id="@req.Id" class="btn btn-sm btn-outline-secondary">Details</a>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="card shadow-sm">
+                <div class="card-body text-muted text-center py-4">
+                    <i class="fa fa-magnifying-glass fa-2x mb-2 d-block"></i>
+                    No matches right now. Add skills to your profile or <a asp-page="/Offers" class="text-success">browse all services</a>.
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Quick actions -->
+<div class="row g-3 mt-2">
+    <div class="col-12">
+        <h5 class="mb-3"><i class="fa fa-bolt me-2 text-success"></i>Quick Actions</h5>
+    </div>
+    <div class="col-6 col-md-3">
+        <a asp-page="/TimeLog" class="card shadow-sm text-center text-decoration-none h-100 acc-quick-card">
+            <div class="card-body py-3">
+                <i class="fa fa-pen-to-square fa-2x text-success mb-2 d-block"></i>
+                <div class="small fw-semibold">Log Hours</div>
+            </div>
+        </a>
+    </div>
+    <div class="col-6 col-md-3">
+        <a asp-page="/Offers" class="card shadow-sm text-center text-decoration-none h-100 acc-quick-card">
+            <div class="card-body py-3">
+                <i class="fa fa-handshake fa-2x text-success mb-2 d-block"></i>
+                <div class="small fw-semibold">Browse Services</div>
+            </div>
+        </a>
+    </div>
+    <div class="col-6 col-md-3">
+        <a asp-page="/Messages/Compose" class="card shadow-sm text-center text-decoration-none h-100 acc-quick-card">
+            <div class="card-body py-3">
+                <i class="fa fa-envelope fa-2x text-success mb-2 d-block"></i>
+                <div class="small fw-semibold">Send Message</div>
+            </div>
+        </a>
+    </div>
+    <div class="col-6 col-md-3">
+        <a asp-page="/Confirmations/Index" class="card shadow-sm text-center text-decoration-none h-100 acc-quick-card">
+            <div class="card-body py-3">
+                <i class="fa fa-check-circle fa-2x text-success mb-2 d-block"></i>
+                <div class="small fw-semibold">Confirmations</div>
+                @if (Model.PendingConfirmationsCount > 0) {
+                    <span class="badge bg-warning text-dark">@Model.PendingConfirmationsCount</span>
+                }
+            </div>
+        </a>
+    </div>
+</div>

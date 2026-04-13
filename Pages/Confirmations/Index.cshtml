@@ -1,0 +1,136 @@
+@page
+@model Time_Bank_V1.Pages.Confirmations.IndexModel
+@using Time_Bank_V1.Data.Entities
+@{
+    ViewData["Title"] = "Confirmations";
+    var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "";
+}
+
+<h2 class="mb-1"><i class="fa fa-check-circle me-2 text-success"></i>Service Confirmations</h2>
+<p class="text-muted small mb-4">Confirm completed services to credit hours to both parties</p>
+
+@if (!Model.PendingTransactions.Any())
+{
+    <div class="alert alert-success">
+        <i class="fa fa-check-circle me-2"></i>You're all caught up — no pending confirmations!
+    </div>
+}
+else
+{
+    <h5 class="mb-3"><span class="badge bg-warning text-dark me-2">@Model.PendingTransactions.Count</span>Awaiting Confirmation</h5>
+    <div class="row g-3 mb-5">
+        @foreach (var tx in Model.PendingTransactions)
+        {
+            var isProvider = tx.ProviderId == userId;
+            var otherUser = isProvider ? tx.Receiver : tx.Provider;
+            var myConfirmed = isProvider ? tx.ConfirmedByProvider : tx.ConfirmedByReceiver;
+            var theirConfirmed = isProvider ? tx.ConfirmedByReceiver : tx.ConfirmedByProvider;
+            <div class="col-md-6">
+                <div class="card shadow-sm border-warning">
+                    <div class="card-header bg-warning bg-opacity-10 border-warning">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0">@tx.Description</h6>
+                            <span class="badge bg-warning text-dark">Pending</span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-2 mb-3 small">
+                            <div class="col-6">
+                                <span class="text-muted">Date:</span><br />
+                                <strong>@tx.ServiceDate.ToString("MMMM d, yyyy")</strong>
+                            </div>
+                            <div class="col-6">
+                                <span class="text-muted">Hours:</span><br />
+                                <strong class="text-success">@tx.Hours.ToString("0.##") hours</strong>
+                            </div>
+                            <div class="col-6">
+                                <span class="text-muted">Category:</span><br />
+                                <strong>@(tx.Category?.Name ?? "General")</strong>
+                            </div>
+                            <div class="col-6">
+                                <span class="text-muted">@(isProvider ? "Provided to" : "Provided by"):</span><br />
+                                <strong>@(otherUser?.FirstName) @(otherUser?.LastName?.Substring(0,1)).</strong>
+                            </div>
+                        </div>
+
+                        <!-- Confirmation status -->
+                        <div class="d-flex gap-3 mb-3 small">
+                            <div>
+                                <i class="fa @(tx.ConfirmedByProvider ? "fa-check-circle text-success" : "fa-circle text-muted") me-1"></i>
+                                Provider confirmed
+                            </div>
+                            <div>
+                                <i class="fa @(tx.ConfirmedByReceiver ? "fa-check-circle text-success" : "fa-circle text-muted") me-1"></i>
+                                Receiver confirmed
+                            </div>
+                        </div>
+
+                        @if (!string.IsNullOrEmpty(tx.Notes))
+                        {
+                            <p class="small text-muted mb-3"><em>@tx.Notes</em></p>
+                        }
+
+                        <div class="d-flex gap-2">
+                            @if (!myConfirmed)
+                            {
+                                <form method="post" asp-page-handler="Confirm">
+                                    <input type="hidden" name="transactionId" value="@tx.Id" />
+                                    <button type="submit" class="btn btn-success btn-sm">
+                                        <i class="fa fa-check me-1"></i>Confirm This Exchange
+                                    </button>
+                                </form>
+                            }
+                            else
+                            {
+                                <span class="badge bg-success p-2"><i class="fa fa-check me-1"></i>You confirmed</span>
+                                @if (!theirConfirmed)
+                                {
+                                    <span class="small text-muted align-self-center">Waiting for other party...</span>
+                                }
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+<!-- Recent confirmed transactions with feedback option -->
+@if (Model.ConfirmedTransactions.Any())
+{
+    <h5 class="mb-3"><i class="fa fa-history me-2 text-muted"></i>Recently Confirmed</h5>
+    <div class="row g-3">
+        @foreach (var tx in Model.ConfirmedTransactions)
+        {
+            var isProvider = tx.ProviderId == userId;
+            var otherUser = isProvider ? tx.Receiver : tx.Provider;
+            <div class="col-md-6">
+                <div class="card shadow-sm border-success border-opacity-25">
+                    <div class="card-body py-2">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <div class="fw-semibold small">@tx.Description</div>
+                                <small class="text-muted">
+                                    @tx.ServiceDate.ToString("MMM d, yyyy") &middot;
+                                    @(isProvider ? "+" : "-")@tx.Hours.ToString("0.##")h
+                                </small>
+                            </div>
+                            <span class="badge bg-success">Confirmed</span>
+                        </div>
+                        <!-- Quick feedback -->
+                        <form method="post" asp-page-handler="LeaveFeedback" class="mt-2 d-flex align-items-center gap-2">
+                            <input type="hidden" name="transactionId" value="@tx.Id" />
+                            <input type="hidden" name="toUserId" value="@(isProvider ? tx.ReceiverId : tx.ProviderId)" />
+                            <input type="text" name="comment" class="form-control form-control-sm"
+                                   placeholder="Leave feedback (optional)..." maxlength="200" />
+                            <button type="submit" class="btn btn-sm btn-outline-success text-nowrap">
+                                <i class="fa fa-thumbs-up me-1"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}

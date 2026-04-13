@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="@(System.Threading.Thread.CurrentThread.CurrentUICulture.TwoLetterISOLanguageName)">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Alachua Community Collective</title>
+    <script type="importmap"></script>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" crossorigin="anonymous" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/Time_Bank_V1.styles.css" asp-append-version="true" />
+</head>
+<body>
+
+<!-- Accessibility toolbar -->
+<div class="acc-toolbar py-1 px-3 d-flex align-items-center gap-3 small" id="acc-toolbar">
+    <span class="fw-semibold text-white me-1"><i class="fa fa-universal-access me-1"></i> Accessibility:</span>
+    <button class="btn btn-sm btn-outline-light py-0" onclick="accFontSize(-1)" title="Decrease text size" aria-label="Decrease text size"><i class="fa fa-minus"></i> A</button>
+    <button class="btn btn-sm btn-outline-light py-0" onclick="accFontSize(1)" title="Increase text size" aria-label="Increase text size"><i class="fa fa-plus"></i> A</button>
+    <button class="btn btn-sm btn-outline-light py-0" onclick="accToggleTTS()" id="tts-btn" title="Toggle text-to-speech" aria-label="Toggle text-to-speech"><i class="fa fa-volume-high"></i> TTS</button>
+    <button class="btn btn-sm btn-outline-light py-0" onclick="accHighContrast()" title="Toggle high contrast" aria-label="Toggle high contrast"><i class="fa fa-circle-half-stroke"></i></button>
+    <div class="ms-auto d-flex gap-2">
+        <a href="?lang=en" class="btn btn-sm btn-outline-light py-0 @(ViewData["Lang"]?.ToString() == "es" ? "" : "active")">EN</a>
+        <a href="?lang=es" class="btn btn-sm btn-outline-light py-0 @(ViewData["Lang"]?.ToString() == "es" ? "active" : "")">ES</a>
+    </div>
+</div>
+
+<header>
+    <nav class="navbar navbar-expand-md shadow-sm acc-navbar">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center gap-2 fw-bold" asp-page="/Index">
+                <span class="acc-logo-icon"><i class="fa fa-clock"></i></span>
+                Alachua<span class="text-success">CC</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMain"
+                    aria-controls="navMain" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navMain">
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <ul class="navbar-nav me-auto mb-2 mb-md-0">
+                        <li class="nav-item">
+                            <a class="nav-link" asp-page="/Dashboard"><i class="fa fa-house-chimney me-1"></i>Dashboard</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-page="/Offers"><i class="fa fa-handshake me-1"></i>Browse Services</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-page="/Offers/Create"><i class="fa fa-plus-circle me-1"></i>Post Service</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-page="/Transaction"><i class="fa fa-clock-rotate-left me-1"></i>Time Account</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-page="/Messages/Index"><i class="fa fa-envelope me-1"></i>Messages</a>
+                        </li>
+                        @if (User.IsInRole("Admin"))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-warning" asp-page="/Admin/Index"><i class="fa fa-shield-halved me-1"></i>Admin</a>
+                            </li>
+                        }
+                    </ul>
+                    <ul class="navbar-nav ms-auto">
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle d-flex align-items-center gap-2" href="#" role="button"
+                               data-bs-toggle="dropdown" aria-expanded="false">
+                                <span class="acc-avatar-sm">@(User.Identity.Name?.Substring(0,1).ToUpper() ?? "U")</span>
+                                <span class="d-none d-md-inline">My Account</span>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end shadow">
+                                <li><a class="dropdown-item" asp-page="/Profile"><i class="fa fa-user me-2"></i>My Profile</a></li>
+                                <li><a class="dropdown-item" asp-page="/Confirmations/Index"><i class="fa fa-check-circle me-2"></i>Confirmations</a></li>
+                                <li><a class="dropdown-item" asp-page="/TimeLog"><i class="fa fa-pen-to-square me-2"></i>Log Hours</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <form method="post" action="/Index?handler=Logout">
+                                        <button type="submit" class="dropdown-item text-danger">
+                                            <i class="fa fa-right-from-bracket me-2"></i>Sign Out
+                                        </button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </li>
+                    </ul>
+                }
+                else
+                {
+                    <ul class="navbar-nav ms-auto">
+                        <li class="nav-item"><a class="nav-link" asp-page="/Index">Sign In / Register</a></li>
+                    </ul>
+                }
+            </div>
+        </div>
+    </nav>
+</header>
+
+<div class="container mt-3 mb-2">
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fa fa-check-circle me-2"></i>@TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fa fa-triangle-exclamation me-2"></i>@TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+</div>
+
+<div class="container">
+    <main role="main" class="pb-4">
+        @RenderBody()
+    </main>
+</div>
+
+<footer class="acc-footer mt-5 py-4">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-4">
+                <h6 class="fw-bold"><i class="fa fa-clock me-1"></i> Alachua Community Collective</h6>
+                <p class="small text-muted mb-0">A time-banking community where every hour counts equally.</p>
+            </div>
+            <div class="col-md-4 text-md-center">
+                <a asp-page="/Privacy" class="text-muted small me-3">Privacy Policy</a>
+                <a href="mailto:support@acc.org" class="text-muted small">Contact</a>
+            </div>
+            <div class="col-md-4 text-md-end small text-muted">
+                &copy; @DateTime.Now.Year Alachua Community Collective
+            </div>
+        </div>
+    </div>
+</footer>
+
+<script src="~/lib/jquery/dist/jquery.min.js"></script>
+<script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+<script src="~/js/site.js" asp-append-version="true"></script>
+
+@await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

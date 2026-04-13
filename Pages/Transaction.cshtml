@@ -1,0 +1,152 @@
+@page
+@model Time_Bank_V1.Pages.TransactionModel
+@using Time_Bank_V1.Data.Entities
+@{
+    ViewData["Title"] = "Time Account";
+    var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "";
+    var balanceColor = Model.CurrentBalance >= 0 ? "success" : (Model.CurrentBalance <= -2 ? "danger" : "warning");
+}
+
+<div class="d-flex justify-content-between align-items-center mb-1">
+    <div>
+        <h2 class="mb-0"><i class="fa fa-clock me-2 text-success"></i>Time Account</h2>
+        <p class="text-muted small">Your hour balance and transaction history</p>
+    </div>
+    <a asp-page="/Transaction" asp-page-handler="Download" class="btn btn-sm btn-outline-success">
+        <i class="fa fa-download me-1"></i>Download Statement (CSV)
+    </a>
+</div>
+
+<!-- Balance summary -->
+<div class="d-flex justify-content-between align-items-center bg-light border rounded p-4 mb-4 shadow-sm">
+    <div>
+        <p class="text-muted mb-1 small text-uppercase fw-bold">Current Balance</p>
+        <h1 class="text-@balanceColor mb-0 fw-bold">
+            @Model.CurrentBalance.ToString("+0.##;-0.##;0") hrs
+        </h1>
+        <small class="text-muted">Updated @DateTime.Now.ToString("MMM d, yyyy")</small>
+        @if (Model.CurrentUser?.IsBalanceLocked == true)
+        {
+            <div><span class="badge bg-danger mt-1"><i class="fa fa-lock me-1"></i>Account locked — earn hours to unlock</span></div>
+        }
+    </div>
+    <div class="d-flex gap-4 text-center">
+        <div>
+            <h3 class="text-success mb-0 fw-bold">+@Model.TotalEarned.ToString("0.##")</h3>
+            <small class="text-muted text-uppercase fw-bold" style="font-size: 0.7rem;">Total Earned</small>
+        </div>
+        <div>
+            <h3 class="text-danger mb-0 fw-bold">-@Model.TotalSpent.ToString("0.##")</h3>
+            <small class="text-muted text-uppercase fw-bold" style="font-size: 0.7rem;">Total Spent</small>
+        </div>
+        <div>
+            <h3 class="text-warning mb-0 fw-bold">@Model.TotalDonated.ToString("0.##")</h3>
+            <small class="text-muted text-uppercase fw-bold" style="font-size: 0.7rem;">Donated</small>
+        </div>
+    </div>
+</div>
+
+<!-- Overdraft indicator -->
+<div class="mb-4">
+    <div class="d-flex justify-content-between small mb-1">
+        <span class="text-danger fw-semibold">-3h (Max Overdraft)</span>
+        <span class="text-success fw-semibold">Balance: @Model.CurrentBalance.ToString("0.##")h</span>
+    </div>
+    @{
+        var pct = Math.Max(0, Math.Min(100, (double)((Model.CurrentBalance + 3) / 20 * 100)));
+    }
+    <div class="progress" style="height: 10px;">
+        <div class="progress-bar bg-@balanceColor" style="width: @pct%"></div>
+    </div>
+    <small class="text-muted">Overdraft protection: maximum -3 hours. Once reached, spending is locked.</small>
+</div>
+
+<!-- Filters -->
+<form method="get" class="row g-2 mb-3">
+    <div class="col-md-3">
+        <select name="TypeFilter" class="form-select form-select-sm">
+            <option value="All" @(Model.TypeFilter is null or "All" ? "selected" : "")>All types</option>
+            <option value="Earned" @(Model.TypeFilter == "Earned" ? "selected" : "")>Earned</option>
+            <option value="Spent" @(Model.TypeFilter == "Spent" ? "selected" : "")>Spent</option>
+            <option value="Donated" @(Model.TypeFilter == "Donated" ? "selected" : "")>Donated</option>
+            <option value="Grant" @(Model.TypeFilter == "Grant" ? "selected" : "")>Admin Grant</option>
+        </select>
+    </div>
+    <div class="col-md-3">
+        <select name="StatusFilter" class="form-select form-select-sm">
+            <option value="All" @(Model.StatusFilter is null or "All" ? "selected" : "")>All statuses</option>
+            <option value="Confirmed" @(Model.StatusFilter == "Confirmed" ? "selected" : "")>Confirmed</option>
+            <option value="Pending" @(Model.StatusFilter == "Pending" ? "selected" : "")>Pending</option>
+        </select>
+    </div>
+    <div class="col-md-2">
+        <input type="date" name="DateFrom" value="@Model.DateFrom" class="form-control form-control-sm" placeholder="From" />
+    </div>
+    <div class="col-md-2">
+        <input type="date" name="DateTo" value="@Model.DateTo" class="form-control form-control-sm" placeholder="To" />
+    </div>
+    <div class="col-md-2">
+        <button type="submit" class="btn btn-sm btn-outline-success w-100"><i class="fa fa-filter me-1"></i>Filter</button>
+    </div>
+</form>
+
+<!-- Transaction table -->
+<div class="card shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light text-muted small text-uppercase">
+                <tr>
+                    <th>Date</th>
+                    <th>Description</th>
+                    <th>Category</th>
+                    <th>Type</th>
+                    <th>Status</th>
+                    <th class="text-end">Hours</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Transactions.Any())
+                {
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-4">
+                            <i class="fa fa-inbox fa-2x mb-2 d-block"></i>No transactions found.
+                        </td>
+                    </tr>
+                }
+                @foreach (var tx in Model.Transactions)
+                {
+                    var isProvider = tx.ProviderId == userId;
+                    var sign = isProvider ? "+" : "-";
+                    var colorClass = tx.Status == TransactionStatus.Confirmed
+                        ? (isProvider ? "text-success" : "text-danger")
+                        : "text-warning";
+                    <tr>
+                        <td class="small">@tx.ServiceDate.ToString("MMM d, yyyy")</td>
+                        <td class="small">@tx.Description</td>
+                        <td class="small text-muted">@(tx.Category?.Name ?? "—")</td>
+                        <td>
+                            <span class="badge bg-light text-dark border">@tx.TransactionType</span>
+                        </td>
+                        <td>
+                            @switch (tx.Status)
+                            {
+                                case TransactionStatus.Pending:
+                                    <span class="badge bg-warning text-dark">Pending</span>
+                                    break;
+                                case TransactionStatus.Confirmed:
+                                    <span class="badge bg-success">Confirmed</span>
+                                    break;
+                                default:
+                                    <span class="badge bg-secondary">@tx.Status</span>
+                                    break;
+                            }
+                        </td>
+                        <td class="text-end fw-bold @colorClass">
+                            @(tx.Status == TransactionStatus.Pending ? "~" : "")@sign@tx.Hours.ToString("0.##")
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

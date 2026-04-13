@@ -1,0 +1,171 @@
+@page
+@model Time_Bank_V1.Pages.Admin.IndexModel
+@{
+    ViewData["Title"] = "Admin Dashboard";
+    var r = Model.Report;
+}
+
+<div class="d-flex align-items-center mb-4 gap-3">
+    <div class="acc-avatar-lg bg-warning text-dark"><i class="fa fa-shield-halved"></i></div>
+    <div>
+        <h2 class="mb-0 text-warning"><i class="fa fa-shield-halved me-2"></i>Admin Dashboard</h2>
+        <p class="text-muted small mb-0">Alachua Community Collective — Platform Management</p>
+    </div>
+</div>
+
+<!-- Stats -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-2">
+        <div class="card shadow-sm text-center">
+            <div class="card-body py-3">
+                <h3 class="fw-bold text-success mb-0">@r?.TotalUsers</h3>
+                <small class="text-muted">Members</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-2">
+        <div class="card shadow-sm text-center">
+            <div class="card-body py-3">
+                <h3 class="fw-bold text-primary mb-0">@r?.TotalOrganizations</h3>
+                <small class="text-muted">Organizations</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-2">
+        <div class="card shadow-sm text-center">
+            <div class="card-body py-3">
+                <h3 class="fw-bold mb-0">@r?.ActiveOffers</h3>
+                <small class="text-muted">Active Offers</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-2">
+        <div class="card shadow-sm text-center">
+            <div class="card-body py-3">
+                <h3 class="fw-bold mb-0">@r?.ActiveRequests</h3>
+                <small class="text-muted">Active Requests</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-2">
+        <div class="card shadow-sm text-center">
+            <div class="card-body py-3">
+                <h3 class="fw-bold text-success mb-0">@r?.TotalHoursExchanged.ToString("0.##")</h3>
+                <small class="text-muted">Hours Exchanged</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-2">
+        <div class="card shadow-sm text-center border-warning">
+            <div class="card-body py-3">
+                <h3 class="fw-bold text-warning mb-0">@r?.PendingTransactions</h3>
+                <small class="text-muted">Pending Tx</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Locked accounts alert -->
+@if (r?.LockedAccounts?.Any() == true)
+{
+    <div class="alert alert-danger mb-4">
+        <strong><i class="fa fa-lock me-2"></i>@r.LockedAccounts.Count account(s) are locked</strong> due to overdraft.
+        <a asp-page="/Admin/Users" class="alert-link ms-2">Review Users &rarr;</a>
+    </div>
+}
+
+<!-- Quick navigation -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <a asp-page="/Admin/Users" class="card shadow-sm text-decoration-none h-100 acc-quick-card">
+            <div class="card-body text-center py-4">
+                <i class="fa fa-users fa-2x text-success mb-2 d-block"></i>
+                <div class="fw-semibold">Manage Users</div>
+                <small class="text-muted">View, grant hours, set accessibility grants</small>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-3">
+        <a asp-page="/Admin/Categories" class="card shadow-sm text-decoration-none h-100 acc-quick-card">
+            <div class="card-body text-center py-4">
+                <i class="fa fa-folder-tree fa-2x text-success mb-2 d-block"></i>
+                <div class="fw-semibold">Categories</div>
+                <small class="text-muted">Add, edit, or delete service categories</small>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-3">
+        <a asp-page="/Admin/Reports" class="card shadow-sm text-decoration-none h-100 acc-quick-card">
+            <div class="card-body text-center py-4">
+                <i class="fa fa-chart-bar fa-2x text-success mb-2 d-block"></i>
+                <div class="fw-semibold">Reports</div>
+                <small class="text-muted">Activity, balance, and exchange reports</small>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-3">
+        <a asp-page="/Confirmations/Index" class="card shadow-sm text-decoration-none h-100 acc-quick-card">
+            <div class="card-body text-center py-4">
+                <i class="fa fa-check-circle fa-2x text-success mb-2 d-block"></i>
+                <div class="fw-semibold">Confirmations</div>
+                <small class="text-muted">View pending transaction confirmations</small>
+            </div>
+        </a>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Recent users -->
+    <div class="col-md-6">
+        <h5 class="mb-3"><i class="fa fa-user-plus me-2 text-muted"></i>Recent Members</h5>
+        <div class="card shadow-sm">
+            <ul class="list-group list-group-flush">
+                @foreach (var u in r?.RecentUsers ?? new())
+                {
+                    <li class="list-group-item d-flex justify-content-between align-items-center py-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="acc-avatar-sm" style="width:32px;height:32px;font-size:0.75rem;">@u.Initials</div>
+                            <div>
+                                <div class="small fw-semibold">@u.FullName</div>
+                                <small class="text-muted">@u.Email</small>
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <div class="small fw-bold @(u.TimeBalance < 0 ? "text-danger" : "text-success")">
+                                @u.TimeBalance.ToString("+0.##;-0.##;0")h
+                            </div>
+                            <small class="text-muted">@u.MemberSince.ToString("MMM d")</small>
+                        </div>
+                    </li>
+                }
+            </ul>
+            <div class="card-footer bg-white">
+                <a asp-page="/Admin/Users" class="text-success small fw-bold">View all users &rarr;</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent transactions -->
+    <div class="col-md-6">
+        <h5 class="mb-3"><i class="fa fa-clock-rotate-left me-2 text-muted"></i>Recent Transactions</h5>
+        <div class="card shadow-sm">
+            <ul class="list-group list-group-flush">
+                @foreach (var tx in r?.RecentTransactions ?? new())
+                {
+                    <li class="list-group-item py-2">
+                        <div class="d-flex justify-content-between">
+                            <div class="small">
+                                <div class="fw-semibold">@tx.Description</div>
+                                <span class="text-muted">@tx.Provider?.FirstName → @tx.Receiver?.FirstName</span>
+                            </div>
+                            <div class="text-end">
+                                <span class="fw-bold text-success">@tx.Hours.ToString("0.##")h</span><br/>
+                                <span class="badge @(tx.Status == TransactionStatus.Confirmed ? "bg-success" : "bg-warning text-dark")">@tx.Status</span>
+                            </div>
+                        </div>
+                    </li>
+                }
+            </ul>
+        </div>
+    </div>
+</div>

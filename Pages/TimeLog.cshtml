@@ -1,0 +1,132 @@
+@page
+@model Time_Bank_V1.Pages.TimeLogModel
+@using Time_Bank_V1.Data.Entities
+@{
+    ViewData["Title"] = "Log Hours";
+}
+
+<div class="mb-4">
+    <h2 class="mb-0"><i class="fa fa-pen-to-square me-2 text-success"></i>Log Completed Service</h2>
+    <p class="text-muted small">Record hours for a completed service exchange. Both parties must confirm.</p>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-7">
+        <div class="card shadow-sm">
+            <div class="card-header bg-success text-white">
+                <h6 class="mb-0">Service Hour Entry</h6>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                    <h6 class="text-muted fw-bold small text-uppercase border-bottom pb-2 mb-3">Step 1 — Link to a Match</h6>
+                    <div class="mb-4">
+                        <label asp-for="LogEntry.MatchId" class="form-label fw-semibold">Select Related Match <span class="text-danger">*</span></label>
+                        @if (Model.MatchOptions.Any())
+                        {
+                            <select asp-for="LogEntry.MatchId" asp-items="Model.MatchOptions" class="form-select">
+                                <option value="">Select a match...</option>
+                            </select>
+                        }
+                        else
+                        {
+                            <div class="alert alert-info py-2 small">
+                                <i class="fa fa-info-circle me-1"></i>
+                                You have no active matches. <a asp-page="/Offers" class="alert-link">Browse services</a> to create one first.
+                            </div>
+                            <input type="hidden" asp-for="LogEntry.MatchId" value="" />
+                        }
+                        <span asp-validation-for="LogEntry.MatchId" class="text-danger small"></span>
+                    </div>
+
+                    <h6 class="text-muted fw-bold small text-uppercase border-bottom pb-2 mb-3">Step 2 — Log Hours</h6>
+                    <div class="mb-3">
+                        <label asp-for="LogEntry.Description" class="form-label fw-semibold">Service Description <span class="text-danger">*</span></label>
+                        <input asp-for="LogEntry.Description" class="form-control" placeholder="e.g. Lawn mowing, Tax preparation help" />
+                        <span asp-validation-for="LogEntry.Description" class="text-danger small"></span>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label asp-for="LogEntry.Hours" class="form-label fw-semibold">Hours Provided <span class="text-danger">*</span></label>
+                            <input asp-for="LogEntry.Hours" type="number" step="0.25" min="0.25" max="24" class="form-control" />
+                            <span asp-validation-for="LogEntry.Hours" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="LogEntry.ServiceDate" class="form-label fw-semibold">Service Date</label>
+                            <input asp-for="LogEntry.ServiceDate" type="date" class="form-control" />
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="LogEntry.CategoryId" class="form-label fw-semibold">Category</label>
+                        <select asp-for="LogEntry.CategoryId" asp-items="Model.CategoryOptions" class="form-select">
+                            <option value="">Select category...</option>
+                        </select>
+                    </div>
+                    <div class="mb-4">
+                        <label asp-for="LogEntry.Notes" class="form-label fw-semibold">Notes (optional)</label>
+                        <textarea asp-for="LogEntry.Notes" class="form-control" rows="3"
+                                  placeholder="Any notes about the completed service..."></textarea>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-success">
+                            <i class="fa fa-check me-1"></i>Submit Log Entry
+                        </button>
+                        <a asp-page="/Dashboard" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-5">
+        <h5 class="mb-3"><i class="fa fa-clock-rotate-left me-2 text-muted"></i>Recent Entries</h5>
+        <div class="card shadow-sm mb-4">
+            @if (Model.RecentEntries.Any())
+            {
+                <ul class="list-group list-group-flush">
+                    @foreach (var tx in Model.RecentEntries)
+                    {
+                        var isProvider = tx.ProviderId == User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                        var txColor = tx.Status == TransactionStatus.Confirmed ? "success" : "warning";
+                        <li class="list-group-item d-flex justify-content-between align-items-center py-2">
+                            <div>
+                                <div class="fw-semibold small">@tx.Description</div>
+                                <small class="text-muted">@tx.ServiceDate.ToString("MMM d, yyyy") &middot; @tx.TransactionType</small>
+                            </div>
+                            <div class="text-end">
+                                <span class="fw-bold text-@(isProvider ? "success" : "secondary")">
+                                    @(isProvider ? "+" : "-")@tx.Hours.ToString("0.##")h
+                                </span><br />
+                                <span class="badge bg-@txColor">@tx.Status</span>
+                            </div>
+                        </li>
+                    }
+                </ul>
+            }
+            else
+            {
+                <div class="card-body text-muted text-center py-3">
+                    <i class="fa fa-inbox mb-2 d-block"></i>No recent entries
+                </div>
+            }
+        </div>
+
+        <div class="card border-success bg-light">
+            <div class="card-body py-3">
+                <h6 class="fw-bold text-success"><i class="fa fa-circle-info me-2"></i>How Confirmation Works</h6>
+                <ol class="small mb-0 ps-3">
+                    <li class="mb-1">You log the service hours here</li>
+                    <li class="mb-1">The other party receives a notification</li>
+                    <li class="mb-1">Both parties confirm the exchange</li>
+                    <li>Hours are posted to your balance</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

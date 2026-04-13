@@ -1,0 +1,108 @@
+@page
+@model Time_Bank_V1.Pages.Messages.IndexModel
+@{
+    ViewData["Title"] = "Messages";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="mb-0"><i class="fa fa-envelope me-2 text-success"></i>Messages</h2>
+        <p class="text-muted small mb-0">All messages are anonymous by default</p>
+    </div>
+    <a asp-page="/Messages/Compose" class="btn btn-success">
+        <i class="fa fa-pen me-1"></i>New Message
+    </a>
+</div>
+
+<ul class="nav nav-tabs mb-4">
+    <li class="nav-item">
+        <a class="nav-link @(Model.Tab == "inbox" ? "active" : "")" asp-page="/Messages/Index" asp-route-tab="inbox">
+            <i class="fa fa-inbox me-1"></i>Inbox
+            @if (Model.Inbox.Any(m => !m.IsRead)) {
+                <span class="badge bg-danger ms-1">@Model.Inbox.Count(m => !m.IsRead)</span>
+            }
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link @(Model.Tab == "sent" ? "active" : "")" asp-page="/Messages/Index" asp-route-tab="sent">
+            <i class="fa fa-paper-plane me-1"></i>Sent
+        </a>
+    </li>
+</ul>
+
+@if (Model.Tab == "inbox")
+{
+    @if (!Model.Inbox.Any())
+    {
+        <div class="text-center py-5 text-muted">
+            <i class="fa fa-envelope-open fa-3x mb-3 d-block"></i>
+            <h5>Your inbox is empty</h5>
+            <p>Messages from community members will appear here.</p>
+        </div>
+    }
+    else
+    {
+        <div class="list-group shadow-sm">
+            @foreach (var msg in Model.Inbox)
+            {
+                <div class="list-group-item list-group-item-action @(!msg.IsRead ? "fw-bold bg-light" : "")">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="flex-grow-1">
+                            <div class="d-flex align-items-center gap-2 mb-1">
+                                <div class="acc-avatar-sm" style="width:30px;height:30px;font-size:0.75rem;">
+                                    @(msg.IsAnonymous ? "?" : msg.FromUser?.Initials)
+                                </div>
+                                <span class="small">
+                                    @(msg.IsAnonymous ? "Anonymous Member" : msg.FromUser?.FullName)
+                                </span>
+                                <small class="text-muted ms-auto">@msg.CreatedAt.ToString("MMM d, h:mm tt")</small>
+                            </div>
+                            <div class="fw-semibold mb-1">@msg.Subject</div>
+                            <p class="mb-0 text-muted small">@msg.Body.Substring(0, Math.Min(120, msg.Body.Length))@(msg.Body.Length > 120 ? "…" : "")</p>
+                        </div>
+                        <div class="ms-3">
+                            <form method="post" asp-page-handler="Delete" style="display:inline;">
+                                <input type="hidden" name="messageId" value="@msg.Id" />
+                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete">
+                                    <i class="fa fa-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    <!-- Expand body -->
+                    <div class="mt-2 p-3 bg-white border rounded small">@msg.Body</div>
+                </div>
+            }
+        </div>
+    }
+}
+else
+{
+    @if (!Model.Sent.Any())
+    {
+        <div class="text-center py-5 text-muted">
+            <i class="fa fa-paper-plane fa-3x mb-3 d-block"></i>
+            <h5>No sent messages</h5>
+        </div>
+    }
+    else
+    {
+        <div class="list-group shadow-sm">
+            @foreach (var msg in Model.Sent)
+            {
+                <div class="list-group-item">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="fw-semibold mb-1">@msg.Subject</div>
+                            <small class="text-muted">
+                                To: @(msg.ToUser != null ? (msg.IsAnonymous ? "Anonymous Member" : msg.ToUser.FullName) : $"Category: {msg.ToCategory?.Name}")
+                                &middot; @msg.CreatedAt.ToString("MMM d, h:mm tt")
+                            </small>
+                            <p class="mb-0 small text-muted mt-1">@msg.Body.Substring(0, Math.Min(100, msg.Body.Length))…</p>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+}

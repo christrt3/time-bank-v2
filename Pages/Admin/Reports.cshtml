@@ -1,0 +1,138 @@
+@page
+@model Time_Bank_V1.Pages.Admin.ReportsModel
+@{
+    ViewData["Title"] = "Reports";
+    var r = Model.Report;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0"><i class="fa fa-chart-bar me-2 text-warning"></i>Platform Reports</h2>
+    <div class="d-flex gap-2">
+        <a asp-page="/Admin/Reports" asp-page-handler="DownloadUsers" class="btn btn-sm btn-outline-success">
+            <i class="fa fa-download me-1"></i>Users CSV
+        </a>
+        <a asp-page="/Admin/Reports" asp-page-handler="DownloadTransactions" class="btn btn-sm btn-outline-success">
+            <i class="fa fa-download me-1"></i>Transactions CSV
+        </a>
+        <a asp-page="/Admin/Index" class="btn btn-outline-secondary btn-sm"><i class="fa fa-arrow-left me-1"></i>Admin Home</a>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-md-4">
+        <div class="card shadow-sm text-center">
+            <div class="card-header bg-success text-white"><h6 class="mb-0">Membership</h6></div>
+            <div class="card-body py-4">
+                <div class="row">
+                    <div class="col-6 border-end">
+                        <h2 class="fw-bold text-success mb-0">@r?.TotalUsers</h2>
+                        <small class="text-muted">Members</small>
+                    </div>
+                    <div class="col-6">
+                        <h2 class="fw-bold text-primary mb-0">@r?.TotalOrganizations</h2>
+                        <small class="text-muted">Organizations</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card shadow-sm text-center">
+            <div class="card-header bg-success text-white"><h6 class="mb-0">Service Exchange</h6></div>
+            <div class="card-body py-4">
+                <div class="row">
+                    <div class="col-6 border-end">
+                        <h2 class="fw-bold text-success mb-0">@r?.TotalHoursExchanged.ToString("0.#")</h2>
+                        <small class="text-muted">Hours Exchanged</small>
+                    </div>
+                    <div class="col-6">
+                        <h2 class="fw-bold mb-0">@r?.TotalTransactions</h2>
+                        <small class="text-muted">Total Transactions</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card shadow-sm text-center">
+            <div class="card-header bg-success text-white"><h6 class="mb-0">Active Listings</h6></div>
+            <div class="card-body py-4">
+                <div class="row">
+                    <div class="col-6 border-end">
+                        <h2 class="fw-bold text-success mb-0">@r?.ActiveOffers</h2>
+                        <small class="text-muted">Offers</small>
+                    </div>
+                    <div class="col-6">
+                        <h2 class="fw-bold text-primary mb-0">@r?.ActiveRequests</h2>
+                        <small class="text-muted">Requests</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Locked accounts -->
+@if (r?.LockedAccounts?.Any() == true)
+{
+    <div class="card shadow-sm mb-4 border-danger">
+        <div class="card-header bg-danger text-white">
+            <h6 class="mb-0"><i class="fa fa-lock me-2"></i>Overdraft-Locked Accounts (@r.LockedAccounts.Count)</h6>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-sm mb-0">
+                <thead class="table-light">
+                    <tr><th>Member</th><th>Email</th><th class="text-end">Balance</th></tr>
+                </thead>
+                <tbody>
+                    @foreach (var u in r.LockedAccounts)
+                    {
+                        <tr>
+                            <td>@u.FullName</td>
+                            <td class="text-muted small">@u.Email</td>
+                            <td class="text-end text-danger fw-bold">@u.TimeBalance.ToString("0.##")h</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+<!-- Recent transactions -->
+<div class="card shadow-sm">
+    <div class="card-header bg-light">
+        <h6 class="mb-0"><i class="fa fa-clock-rotate-left me-2"></i>Recent Transactions</h6>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Date</th>
+                    <th>Description</th>
+                    <th>Provider</th>
+                    <th>Receiver</th>
+                    <th class="text-end">Hours</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var tx in r?.RecentTransactions ?? new())
+                {
+                    <tr>
+                        <td class="small">@tx.ServiceDate.ToString("MMM d, yyyy")</td>
+                        <td class="small">@tx.Description</td>
+                        <td class="small">@tx.Provider?.FirstName @tx.Provider?.LastName?.Substring(0,1).</td>
+                        <td class="small">@tx.Receiver?.FirstName @tx.Receiver?.LastName?.Substring(0,1).</td>
+                        <td class="text-end fw-bold text-success small">@tx.Hours.ToString("0.##")h</td>
+                        <td>
+                            <span class="badge @(tx.Status == TransactionStatus.Confirmed ? "bg-success" : "bg-warning text-dark")">
+                                @tx.Status
+                            </span>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
