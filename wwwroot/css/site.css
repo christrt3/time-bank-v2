@@ -1,0 +1,184 @@
+/* ============================================================
+   Alachua Community Collective — Site Styles
+   ============================================================ */
+
+/* Base font size (supports text resize via JS) */
+html {
+    font-size: 15px;
+}
+@media (min-width: 768px) {
+    html {
+        font-size: 16px;
+    }
+}
+
+/* ── Accessibility Toolbar ─────────────────────────────────── */
+.acc-toolbar {
+    background-color: #1a5c3a;
+    color: white;
+    font-size: 0.8rem;
+    min-height: 36px;
+}
+
+.acc-toolbar .btn-outline-light {
+    border-color: rgba(255,255,255,0.4);
+    font-size: 0.75rem;
+    padding: 0.1rem 0.5rem;
+}
+
+/* ── Navigation ────────────────────────────────────────────── */
+.acc-navbar {
+    background-color: #ffffff;
+    border-bottom: 2px solid #198754;
+}
+
+.acc-navbar .navbar-brand {
+    color: #198754;
+    font-size: 1.2rem;
+}
+
+.acc-logo-icon {
+    background: #198754;
+    color: white;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+}
+
+.acc-navbar .nav-link {
+    color: #444;
+    font-size: 0.9rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    transition: background 0.15s;
+}
+
+.acc-navbar .nav-link:hover {
+    background-color: #f0faf5;
+    color: #198754;
+}
+
+/* ── Avatars ────────────────────────────────────────────────── */
+.acc-avatar-sm {
+    width: 40px;
+    height: 40px;
+    background: #198754;
+    color: white;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+}
+
+.acc-avatar-lg {
+    width: 56px;
+    height: 56px;
+    background: #198754;
+    color: white;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
+/* ── Cards ──────────────────────────────────────────────────── */
+.acc-quick-card {
+    color: inherit;
+    transition: transform 0.15s, box-shadow 0.15s;
+    cursor: pointer;
+}
+
+.acc-quick-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12) !important;
+}
+
+/* ── Footer ─────────────────────────────────────────────────── */
+.acc-footer {
+    background-color: #f8f9fa;
+    border-top: 2px solid #dee2e6;
+}
+
+/* ── Focus styles (accessibility) ───────────────────────────── */
+.btn:focus, .btn:active:focus,
+.form-control:focus, .form-check-input:focus,
+.form-select:focus, .nav-link:focus {
+    box-shadow: 0 0 0 0.2rem rgba(25, 135, 84, 0.4);
+    outline: 2px solid #198754;
+    outline-offset: 1px;
+}
+
+/* ── High contrast mode ─────────────────────────────────────── */
+body.high-contrast {
+    filter: contrast(1.5);
+}
+
+body.high-contrast .card {
+    border: 2px solid #000 !important;
+}
+
+body.high-contrast .text-muted {
+    color: #333 !important;
+}
+
+/* ── Text-to-speech highlight ───────────────────────────────── */
+.tts-active {
+    outline: 3px solid #fd7e14;
+    outline-offset: 2px;
+    background: rgba(253,126,20,0.08);
+}
+
+/* ── Utility ────────────────────────────────────────────────── */
+html {
+    position: relative;
+    min-height: 100%;
+}
+
+body {
+    margin-bottom: 0;
+    background-color: #f8f9fa;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, sans-serif;
+}
+
+.card {
+    border-radius: 0.5rem;
+}
+
+.card-header {
+    border-radius: 0.5rem 0.5rem 0 0 !important;
+}
+
+/* ── Form tweaks ─────────────────────────────────────────────── */
+.form-floating > .form-control-plaintext::placeholder,
+.form-floating > .form-control::placeholder {
+    color: var(--bs-secondary-color);
+    text-align: end;
+}
+
+.form-floating > .form-control-plaintext:focus::placeholder,
+.form-floating > .form-control:focus::placeholder {
+    text-align: start;
+}
+
+/* ── Print ───────────────────────────────────────────────────── */
+@media print {
+    .acc-toolbar, .acc-navbar, .acc-footer, .btn, form { display: none !important; }
+    .card { border: 1px solid #ccc !important; }
+}
+
+/* ── Responsive table on mobile ──────────────────────────────── */
+@media (max-width: 576px) {
+    .table-responsive {
+        font-size: 0.82rem;
+    }
+}
